@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 면접 어시스턴트</title>
+<meta name="description" content="BIG5 성격 모델 기반 인재상 부합도 분석 · 권T의 면접교실">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231f2329'/><rect x='13' y='7' width='6' height='12' rx='3' fill='white'/><path d='M10 16a6 6 0 0 0 12 0M16 22v4' stroke='white' stroke-width='2' fill='none' stroke-linecap='round'/></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="eyebrow">권T의 면접교실</span>
+      <span class="brand-name">AI 면접 어시스턴트</span>
+    </div>
+    <div class="status">
+      <span class="lamp" id="lampAi" title="AI 연결 상태"><i></i><b>AI</b></span>
+      <span class="lamp" id="lampDev" title="기기 연결 상태"><i></i><b>기기</b></span>
+      <button class="icon-btn" id="btnSettings" aria-label="설정">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </div>
+  <nav class="steps" id="steps">
+    <button data-step="1"><span>1</span>면접 정보</button>
+    <button data-step="2"><span>2</span>인재상 기준</button>
+    <button data-step="3"><span>3</span>면접 진행</button>
+    <button data-step="4"><span>4</span>평가 보고서</button>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <!-- 화면 1 — 면접 정보 입력 -->
+  <section class="screen" id="screen1">
+    <h1 class="h-title">1. 면접 정보 입력</h1>
+    <p class="lead">면접에 필요한 기본 정보를 입력합니다. 자기소개서는 파일로 올리거나 글을 그대로 붙여넣으면 됩니다.</p>
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="label">직무 · 포지션</span>
+        <input id="inJob" type="text" placeholder="예) 백엔드 개발자 · 신입" autocomplete="off">
+      </label>
+      <label class="field">
+        <span class="label">지원자 이름</span>
+        <input id="inName" type="text" placeholder="예) 홍길동" autocomplete="off">
+      </label>
+    </div>
+
+    <div class="field">
+      <div class="label-row">
+        <span class="label">자기소개서</span>
+        <label class="btn btn-ghost btn-sm">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>
+          파일 첨부
+          <input id="inFile" type="file" accept=".txt,.md,.docx" hidden>
+        </label>
+      </div>
+      <textarea id="inResume" rows="11" placeholder="자기소개서 내용을 붙여넣거나 .txt / .docx 파일을 첨부하세요."></textarea>
+      <span class="hint" id="resumeMeta">0자</span>
+    </div>
+
+    <div class="field field-inline">
+      <span class="label">생성할 질문 수</span>
+      <div class="seg seg-sm" id="inCount">
+        <button data-v="3">3개</button><button data-v="4">4개</button><button data-v="5">5개</button>
+      </div>
+    </div>
+
+    <aside class="note">
+      <b>블라인드 처리.</b> 지원자 이름은 보고서를 구분하는 데만 쓰이고 AI에는 전달되지 않습니다.
+      출신 학교·외모처럼 역량과 무관한 정보는 평가하지 않으며, AI는 답변의 <b>텍스트 내용</b>만 분석합니다.
+    </aside>
+
+    <div class="actions">
+      <span></span>
+      <button class="btn btn-primary" id="go2">다음 — 인재상 기준 설정</button>
+    </div>
+  </section>
+
+  <!-- 화면 2 — 인재상 기준 설정 -->
+  <section class="screen" id="screen2" hidden>
+    <h1 class="h-title">2. 인재상 기준 설정</h1>
+    <p class="lead">다섯 가지 성격 요인마다 원하는 방향을 한 번씩 누르세요. 기본값은 <b>상관없음</b>이라, 중요하다고 생각하는 항목만 바꾸면 됩니다.</p>
+
+    <div class="big5" id="big5Rows"></div>
+
+    <div class="summary-box">
+      <span class="eyebrow">현재 설정한 인재상</span>
+      <p id="personaSummary">아직 설정한 기준이 없습니다.</p>
+    </div>
+
+    <aside class="note">
+      <b>단계의 뜻.</b> 각 단계는 단순한 중요도가 아니라 <b>원하는 성격의 방향과 정도</b>입니다.
+      ‘매우 안 중요’는 그 성격이 매우 낮은 사람을, ‘매우 중요’는 매우 높은 사람을 선호한다는 뜻이고, ‘상관없음’은 적합도 계산에서 뺍니다.
+    </aside>
+
+    <div class="actions">
+      <button class="btn btn-ghost" data-goto="1">이전</button>
+      <button class="btn btn-primary" id="go3">질문 만들기</button>
+    </div>
+  </section>
+
+  <!-- 화면 3 — 면접 진행 -->
+  <section class="screen" id="screen3" hidden>
+    <h1 class="h-title">3. 면접 진행</h1>
+
+    <div class="live-head">
+      <div class="live-state" id="liveState"><i></i><span>대기 중</span></div>
+      <div class="live-meta" id="liveMeta">질문 1 / 3</div>
+    </div>
+
+    <div class="question-card">
+      <span class="eyebrow" id="qPurpose">질문</span>
+      <p class="question" id="qText">질문을 준비하고 있습니다…</p>
+      <div class="q-controls">
+        <button class="btn btn-ghost" id="btnPrev" aria-label="이전 질문">←</button>
+        <button class="btn btn-primary" id="btnArm" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          <span>기기로 보내기</span>
+        </button>
+        <button class="btn btn-ghost" id="btnStop" hidden>답변 마감</button>
+        <button class="btn btn-ghost" id="btnSpeak">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+          브라우저로 읽기
+        </button>
+        <button class="btn btn-ghost" id="btnRec">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+          <span>마이크 녹음</span>
+        </button>
+        <button class="btn btn-ghost" id="btnNext" aria-label="다음 질문">다음 →</button>
+      </div>
+      <p class="q-hint" id="qHint"></p>
+    </div>
+
+    <div class="live-grid">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="h-sub">답변 기록</h2>
+          <span class="hint" id="metricLine"></span>
+        </div>
+        <textarea id="answerBox" rows="7" placeholder="녹음하면 답변이 여기에 실시간으로 적힙니다. 직접 입력하거나 고칠 수도 있습니다."></textarea>
+        <div class="interim" id="interim"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="h-sub">질문 목록</h2>
+          <button class="btn btn-ghost btn-sm" id="btnAddQ">+ 질문 추가</button>
+        </div>
+        <ol class="qlist" id="qList"></ol>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="h-sub">AI 추천 꼬리 질문</h2>
+        <button class="btn btn-ghost btn-sm" id="btnFollow">현재 답변으로 만들기</button>
+      </div>
+      <ul class="follow" id="followList"><li class="empty">답변을 마치면 확인이 필요한 부분에 대한 꼬리 질문이 여기에 나타납니다. 누르면 다음 질문으로 추가됩니다.</li></ul>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" data-goto="2">이전</button>
+      <div class="actions-right">
+        <button class="btn btn-primary" id="go4">면접 종료 · 분석</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 화면 4 — 평가 결과 보고서 -->
+  <section class="screen" id="screen4" hidden>
+    <h1 class="h-title">4. 평가 결과 보고서</h1>
+    <div id="report"></div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  본 보고서는 면접관의 판단을 돕기 위한 참고 자료이며, 최종 합격 여부는 면접관이 직접 결정합니다.
+</footer>
+
+<!-- 설정 -->
+<dialog id="dlgSettings" class="dlg">
+  <form method="dialog">
+    <h2 class="h-sub">설정</h2>
+    <label class="field">
+      <span class="label">Gemini API 키</span>
+      <input id="setKey" type="password" placeholder="AIza…" autocomplete="off">
+      <span class="hint">키는 이 브라우저에만 저장됩니다. 비워 두면 <b>데모 분석</b>(규칙 기반)으로 동작합니다.</span>
+    </label>
+    <label class="field">
+      <span class="label">모델</span>
+      <input id="setModel" type="text" placeholder="gemini-2.5-flash">
+    </label>
+    <div class="field">
+      <span class="label">ESP32 기기 (샤오즈 에이전트)</span>
+      <div class="seg seg-sm" id="setMode">
+        <button type="button" data-v="off">끔</button>
+        <button type="button" data-v="direct">직접 연결</button>
+        <button type="button" data-v="bridge">브리지 서버</button>
+      </div>
+      <input id="setUrl" type="password" placeholder="wss://api.xiaozhi.me/mcp/?token=…" autocomplete="off">
+      <span class="hint" id="modeHint"></span>
+      <div class="row">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnConnect">연결</button>
+        <span class="hint" id="devInfo">연결 안 됨</span>
+      </div>
+      <details class="prompt-box">
+        <summary>에이전트 프롬프트 (샤오즈 콘솔에 넣을 내용)</summary>
+        <pre id="agentPrompt">당신은 면접 진행 도우미입니다. 스스로 질문을 만들지 마세요.
+
+1. 면접이 시작되면 get_next_question 도구를 호출합니다.
+2. 돌려받은 question 문장을 한 글자도 바꾸지 말고 그대로 읽습니다.
+   요약하거나 말투를 다듬거나 설명을 덧붙이지 마세요.
+3. 지원자가 답변을 마칠 때까지 조용히 듣습니다. 중간에 평가하거나
+   되묻지 마세요.
+4. 답변이 끝나면 submit_answer 도구로 들은 내용을 그대로 전달합니다.
+   요약하지 마세요.
+5. 그다음 다시 get_next_question 을 호출해 이어갑니다.
+6. done 이 true 로 오면 "면접이 끝났습니다. 수고하셨습니다"라고
+   말하고 마칩니다.
+
+지원자가 질문을 다시 들려달라고 하면 같은 문장을 그대로 반복합니다.</pre>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyPrompt">복사</button>
+      </details>
+    </div>
+    <div class="field">
+      <span class="label">음성 인식</span>
+      <span class="hint" id="sttInfo"></span>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="btnReset">처음부터 다시</button>
+      <button class="btn btn-primary" value="save" id="btnSaveSettings">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 최종 평가 -->
+<dialog id="dlgFinal" class="dlg">
+  <form method="dialog" id="finalForm">
+    <h2 class="h-sub">최종 평가 입력</h2>
+    <div class="field">
+      <span class="label">면접관 판단</span>
+      <div class="seg" id="finalDecision">
+        <button type="button" data-v="합격">합격</button>
+        <button type="button" data-v="보류">보류</button>
+        <button type="button" data-v="불합격">불합격</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="label">면접관 점수</span>
+      <div class="seg" id="finalScore">
+        <button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button><button type="button" data-v="4">4</button><button type="button" data-v="5">5</button>
+      </div>
+    </div>
+    <label class="field">
+      <span class="label">메모</span>
+      <textarea id="finalMemo" rows="4" placeholder="판단 근거를 간단히 남겨 주세요."></textarea>
+    </label>
+    <div class="confirm" id="finalConfirm" hidden></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="btnFinalCancel">취소</button>
+      <button type="button" class="btn btn-primary" id="btnFinalNext">제출 전 확인</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="assets/ai.js"></script>
+<script src="assets/device.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
